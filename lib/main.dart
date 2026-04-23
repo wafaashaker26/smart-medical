@@ -4,12 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:smart_app/screens/home_screen.dart';
 
 import 'core/models.dart';
-// ================================================================
-// const String BASE_URL = 'http://localhost:8000';
-const String BASE_URL = 'http://192.168.1.3:8000';
-// جهاز حقيقي → 'http://192.168.1.X:8000'
 
-//  COLORS
+// ================================================================
+// BASE URL
+// ================================================================
+const String BASE_URL = 'http://localhost:8000';
+// const String BASE_URL = 'http://192.168.1.3:8000';
+
+// ================================================================
+// COLORS
 // ================================================================
 const kBg      = Color(0xFFF8F9FA);
 const kSurface = Color(0xFFFFFFFF);
@@ -32,11 +35,23 @@ void main() => runApp(const MediScanApp());
 
 class MediScanApp extends StatelessWidget {
   const MediScanApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MediScan',
       debugShowCheckedModeBanner: false,
+
+      // ============================================================
+      // ✅ RTL GLOBAL FIX
+      // ============================================================
+      builder: (context, child) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: child!,
+        );
+      },
+
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
@@ -52,44 +67,72 @@ class MediScanApp extends StatelessWidget {
           filled: true,
           fillColor: kSurface,
           hintStyle: const TextStyle(color: kMuted, fontSize: 13),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          border:        OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorder, width: 0.5)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kBorder, width: 0.5)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: kAccent, width: 1.5)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 10,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: kBorder, width: 0.5),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: kBorder, width: 0.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: kAccent, width: 1.5),
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: kAccent,
             foregroundColor: Colors.white,
             minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             elevation: 0,
-            textStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+            textStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
           ),
         ),
       ),
+
       home: const HomeScreen(),
     );
   }
 }
 
-//  API SERVICE
+// ================================================================
+// API SERVICE
 // ================================================================
 class ApiService {
   static Future<List<String>> getAllSymptoms() async {
-    final res = await http.get(Uri.parse('$BASE_URL/symptoms'))
-        .timeout(const Duration(seconds: 10));
-    if (res.statusCode == 200) return List<String>.from(jsonDecode(res.body)['symptoms']);
-    throw Exception('Failed to load symptoms');
+    final res = await http.get(Uri.parse('$BASE_URL/symptoms'));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+
+      final Map<String, dynamic> map =
+      Map<String, dynamic>.from(data['symptoms_ar']);
+
+      return map.values.toList().cast<String>();
+    }
+
+    throw Exception('Failed');
   }
 
   static Future<PredictionResult> predict(List<String> symptoms) async {
-    final res = await http.post(Uri.parse('$BASE_URL/predict'),
+    final res = await http.post(
+      Uri.parse('$BASE_URL/predict'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'symptoms': symptoms}),
-    ).timeout(const Duration(seconds: 30));
-    if (res.statusCode == 200) return PredictionResult.fromJson(jsonDecode(utf8.decode(res.bodyBytes)));
-    throw Exception('Prediction failed: ${res.statusCode}');
+    );
+
+    return PredictionResult.fromJson(jsonDecode(res.body));
   }
 
   static Future<String> chat({
@@ -99,27 +142,18 @@ class ApiService {
     required List<String> symptoms,
     required List<Map<String, String>> history,
   }) async {
-    final res = await http.post(Uri.parse('$BASE_URL/chat'),
+    final res = await http.post(
+      Uri.parse('$BASE_URL/chat'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'message':  message,
-        'disease':  disease,
-        'risk':     risk,
+        'message': message,
+        'disease': disease,
+        'risk': risk,
         'symptoms': symptoms,
-        'history':  history,
+        'history': history,
       }),
-    ).timeout(const Duration(seconds: 30));
+    );
 
-    if (res.statusCode == 200) {
-      return jsonDecode(utf8.decode(res.bodyBytes))['reply'] as String;
-    }
-    throw Exception('Chat failed: ${res.statusCode}');
+    return jsonDecode(res.body)['reply'];
   }
 }
-
-// ================================================================
-
-
-// ================================================================
-//  LOADING DOTS
-// ================================================================
