@@ -6,13 +6,11 @@ import 'package:smart_app/screens/home_screen.dart';
 import 'core/models.dart';
 
 // ================================================================
-// BASE URL
-// ================================================================
-const String BASE_URL = 'http://localhost:8000';
-// const String BASE_URL = 'http://192.168.1.3:8000';
+// const String BASE_URL = 'http://localhost:8000';
+const String BASE_URL = 'http://MennaSrour.pythonanywhere.com';
+// جهاز حقيقي → 'http://192.168.1.X:8000'
 
-// ================================================================
-// COLORS
+//  COLORS
 // ================================================================
 const kBg      = Color(0xFFF8F9FA);
 const kSurface = Color(0xFFFFFFFF);
