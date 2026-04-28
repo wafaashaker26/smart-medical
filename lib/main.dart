@@ -114,13 +114,13 @@ class ApiService {
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
 
-      final Map<String, dynamic> map =
-      Map<String, dynamic>.from(data['symptoms_ar']);
-
-      return map.values.toList().cast<String>();
+      // التعديل هنا: استخدمي مفتاح 'symptoms' اللي راجع من السيرفر
+      if (data['symptoms'] != null) {
+        // لو السيرفر باعت لستة (زي ما عملنا)
+        return List<String>.from(data['symptoms']);
+      }
     }
-
-    throw Exception('Failed');
+    throw Exception('Failed to load symptoms');
   }
 
   static Future<PredictionResult> predict(List<String> symptoms) async {
